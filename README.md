@@ -4,11 +4,11 @@ A production-grade large language model serving platform built on Kubernetes, de
 
 ## Overview
 
-This platform accepts text prompts via a REST API and returns generated text using a hosted language model, built to mirror how AI companies serve LLMs in production. The system is designed for reliability, cost efficiency, and operational visibility — not just getting a model running, but keeping it running well under load.
+This platform accepts text prompts via a REST API and returns generated text using a hosted language model, built to serve LLMs in production. The system is designed for reliability, cost efficiency, and operational visibility, not just getting a model running, but keeping it running well under load.
 
 ## Architecture
 
-Incoming requests are routed through a Kubernetes Ingress controller to a pool of vLLM inference pods, each running a quantized language model with continuous batching for maximum throughput. Infrastructure is provisioned entirely as code using Terraform, with GPU node pools that scale automatically based on utilization metrics. Deployments are managed via Argo CD using a GitOps workflow — a push to the main branch is the only action needed to update production. The full observability stack (Prometheus + Grafana) provides real-time dashboards for token throughput, request latency, GPU utilization, and SLO burn rate.
+Incoming requests are routed through a Kubernetes Ingress controller to a pool of vLLM inference pods, each running a quantized language model with continuous batching for maximum throughput. Infrastructure is provisioned entirely as code using Terraform, with GPU node pools that scale automatically based on utilization metrics. Deployments are managed via Argo CD using a GitOps workflow, a push to the main branch is the only action needed to update production. The full observability stack (Prometheus + Grafana) provides real-time dashboards for token throughput, request latency, GPU utilization, and SLO burn rate.
 
 ## Tech stack
 
