@@ -10,6 +10,7 @@ terraform.tfstate.backup
 # AWS credentials - never commit these
 .env
 .env.local
+.csv
 credentials
 
 # Python
