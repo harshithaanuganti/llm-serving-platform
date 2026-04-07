@@ -16,7 +16,7 @@ Kubernetes (EKS) · vLLM · Helm · Terraform · Argo CD · Prometheus · Grafan
 
 ## Status
 
-- [ ] Terraform EKS cluster provisioned
+- [x] Terraform EKS cluster provisioned
 - [ ] vLLM pods deployed via Helm
 - [ ] CI/CD pipeline green
 - [ ] Argo CD GitOps configured
