@@ -1,0 +1,46 @@
+replicaCount: 2
+
+image:
+  repository: 803343982815.dkr.ecr.us-west-2.amazonaws.com/llm-serving-platform
+  tag: latest
+  pullPolicy: Always
+
+service:
+  type: ClusterIP
+  port: 8000
+
+resources:
+  requests:
+    memory: "512Mi"
+    cpu: "500m"
+  limits:
+    memory: "1Gi"
+    cpu: "1000m"
+
+# GPU resources - uncomment for Phase 2 with real vLLM
+# resources:
+#   requests:
+#     memory: "8Gi"
+#     cpu: "2000m"
+#     nvidia.com/gpu: "1"
+#   limits:
+#     memory: "16Gi"
+#     cpu: "4000m"
+#     nvidia.com/gpu: "1"
+
+autoscaling:
+  enabled: true
+  minReplicas: 2
+  maxReplicas: 6
+  targetCPUUtilizationPercentage: 70
+
+healthCheck:
+  path: /healthz
+  initialDelaySeconds: 10
+  periodSeconds: 10
+
+env:
+  - name: APP_ENV
+    value: "production"
+  - name: LOG_LEVEL
+    value: "info"
