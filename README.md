@@ -4,6 +4,8 @@ A production-grade large language model serving platform built on Kubernetes, de
 
 ![Architecture](docs/images/architecture-diagram.png)
 
+> 📝 **Read the story behind this project:** [I Built an LLM Platform Without Burning Cash on GPUs](https://medium.com/@anugantiharshitha/i-built-an-llm-platform-without-burning-cash-on-gpus-2de914396715)
+
 ## Overview
 
 This platform accepts text prompts via a REST API and returns generated text using a hosted language model, built to mirror how AI companies serve LLMs in production. The system is designed for reliability, cost efficiency, and operational visibility — not just getting a model running, but keeping it running well under load.
@@ -36,7 +38,7 @@ Kubernetes (EKS) · FastAPI · vLLM (Phase 2) · Helm · Terraform · Argo CD ·
 - [ ] Autoscaling on GPU metrics (KEDA)
 - [ ] Phase 2: real vLLM with Llama-3 8B
 - [ ] Benchmark results documented
-- [ ] Blog post published
+- [x] Blog post published
 
 ## API
 
