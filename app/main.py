@@ -28,3 +28,6 @@ async def generate(request: InferenceRequest):
 @app.get("/healthz")
 async def health():
     return {"status": "ok"}
+
+# Expose Prometheus metrics at /metrics
+Instrumentator().instrument(app).expose(app)
