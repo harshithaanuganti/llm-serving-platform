@@ -2,6 +2,8 @@ from fastapi import FastAPI
 from pydantic import BaseModel
 from prometheus_fastapi_instrumentator import Instrumentator
 import time
+import asyncio
+import random
 
 app = FastAPI(title="LLM Serving Platform")
 
@@ -18,6 +20,8 @@ class InferenceResponse(BaseModel):
 @app.post("/v1/generate", response_model=InferenceResponse)
 async def generate(request: InferenceRequest):
     start = time.time()
+    # Simulate inference latency (Phase 1 stub — real vLLM latency in Phase 2)
+    await asyncio.sleep(random.uniform(0.05, 0.3))
     response_text = f"[CPU stub] Echo: {request.prompt[:50]}..."
     latency = (time.time() - start) * 1000
     return InferenceResponse(
