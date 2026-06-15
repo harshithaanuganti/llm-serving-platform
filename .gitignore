@@ -35,4 +35,4 @@ logs/
 
 # Test coverage
 .coverage
-htmlcov/
+htmlcov/.DS_Store

@@ -2,15 +2,17 @@
 
 A production-grade large language model serving platform built on Kubernetes, designed to handle real-world inference workloads with autoscaling, GitOps deployments, and full observability.
 
+![Architecture](docs/images/architecture-diagram.png)
+
 ## Overview
 
 This platform accepts text prompts via a REST API and returns generated text using a hosted language model, built to mirror how AI companies serve LLMs in production. The system is designed for reliability, cost efficiency, and operational visibility — not just getting a model running, but keeping it running well under load.
 
-The platform is built in two phases. Phase 1 uses a CPU-based FastAPI stub to validate the full infrastructure stack end to end — Kubernetes, Helm, CI/CD, observability, and autoscaling — without GPU costs. Phase 2 swaps in a real vLLM inference engine (Llama-3 8B) by changing two lines in the Helm values file. The platform architecture is identical in both phases.
+The platform is built in two phases. Phase 1 uses a CPU-based FastAPI stub to validate the full infrastructure stack end to end — Kubernetes, Helm, CI/CD, GitOps, and observability — without GPU costs. Phase 2 swaps in a real vLLM inference engine (Llama-3 8B) by changing a few lines in the Helm values file. The platform architecture is identical in both phases.
 
 ## Architecture
 
-Incoming requests are routed through a Kubernetes Ingress controller to a pool of inference pods running on EKS. In Phase 1, pods run a FastAPI CPU stub that validates the serving infrastructure. In Phase 2, pods run vLLM with a quantized Llama-3 8B model with continuous batching for maximum throughput. Infrastructure is provisioned entirely as code using Terraform, with node pools that scale automatically based on utilization metrics. Deployments are managed via Argo CD using a GitOps workflow — a push to the main branch is the only action needed to update production. The full observability stack (Prometheus + Grafana) provides real-time dashboards for request throughput, latency percentiles, and per-endpoint traffic.
+Incoming requests are routed through a Kubernetes Service to a pool of inference pods running on EKS. In Phase 1, pods run a FastAPI CPU stub that validates the serving infrastructure. In Phase 2, pods run vLLM with a quantized Llama-3 8B model with continuous batching for maximum throughput. Infrastructure is provisioned entirely as code using Terraform. Deployments are managed via Argo CD using a GitOps workflow — a push to the main branch triggers CI, which builds and pushes the image, then Argo CD automatically syncs the change to the cluster. The full observability stack (Prometheus + Grafana) provides real-time dashboards for request rate, latency percentiles, and per-endpoint traffic.
 
 ## Observability
 
@@ -103,7 +105,10 @@ terraform apply
 # Connect kubectl
 aws eks update-kubeconfig --region us-west-2 --name llm-serving-platform
 
-# Argo CD handles deployment automatically from git
+# Install Argo CD and apply the application manifest
+kubectl apply -f argocd/application.yaml
+
+# Argo CD then deploys the app automatically from git.
 # Or deploy manually with Helm:
 helm install llm-platform ./helm/vllm
 ```
@@ -131,7 +136,7 @@ llm-serving-platform/
 ├── argocd/                   # Argo CD GitOps configuration
 │   └── application.yaml
 ├── monitoring/dashboards/    # Grafana dashboard JSON
-├── docs/images/              # Screenshots
+├── docs/images/              # Architecture diagram + screenshots
 ├── .github/workflows/        # CI/CD pipeline
 │   └── ci.yml
 ├── Dockerfile
