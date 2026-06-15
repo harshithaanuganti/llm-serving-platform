@@ -22,8 +22,8 @@ Kubernetes (EKS) · FastAPI · vLLM (Phase 2) · Helm · Terraform · Argo CD ·
 - [x] Docker image built and pushed to ECR
 - [x] FastAPI CPU stub verified working locally
 - [x] vLLM pods deployed via Helm
-- [ ] CI/CD pipeline green
-- [ ] Argo CD GitOps configured
+- [x] CI/CD pipeline green
+- [x] Argo CD GitOps configured
 - [ ] Prometheus + Grafana dashboards live
 - [ ] Autoscaling on GPU metrics (KEDA)
 - [ ] Phase 2: real vLLM with Llama-3 8B

@@ -48,6 +48,8 @@ jobs:
     runs-on: ubuntu-latest
     needs: lint
     if: github.ref == 'refs/heads/main'
+    permissions:
+      contents: write
     outputs:
       image_tag: ${{ steps.meta.outputs.tag }}
     steps:
@@ -87,6 +89,7 @@ jobs:
           sed -i "s/tag: .*/tag: ${{ github.sha }}/" helm/vllm/values.yaml
           git config user.email "ci@github.com"
           git config user.name "GitHub Actions"
+          git remote set-url origin https://x-access-token:${{ secrets.GITHUB_TOKEN }}@github.com/${{ github.repository }}
           git add helm/vllm/values.yaml
           git commit -m "ci: update image tag to ${{ github.sha }}" || echo "No changes to commit"
           git push
