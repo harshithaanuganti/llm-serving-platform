@@ -7,12 +7,27 @@ spec:
     name: {{ .Release.Name }}-vllm
   minReplicaCount: 2
   maxReplicaCount: 6
-  pollingInterval: 15
-  cooldownPeriod: 60
+  pollingInterval: 30
+  cooldownPeriod: 300
+  advanced:
+    horizontalPodAutoscalerConfig:
+      behavior:
+        scaleUp:
+          stabilizationWindowSeconds: 30
+          policies:
+            - type: Pods
+              value: 2
+              periodSeconds: 60
+        scaleDown:
+          stabilizationWindowSeconds: 300
+          policies:
+            - type: Pods
+              value: 1
+              periodSeconds: 120
   triggers:
     - type: prometheus
       metadata:
         serverAddress: http://monitoring-kube-prometheus-prometheus.monitoring.svc:9090
         metricName: http_requests_per_second
         threshold: "5"
-        query: sum(rate(http_requests_total{job="{{ .Release.Name }}-vllm", handler="/v1/generate"}[1m]))
+        query: sum(rate(http_requests_total{job="{{ .Release.Name }}-vllm", handler="/v1/generate"}[2m]))
