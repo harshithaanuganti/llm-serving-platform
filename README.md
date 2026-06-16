@@ -49,8 +49,10 @@ Kubernetes (EKS) · FastAPI · vLLM (Phase 2) · Helm · Terraform · Argo CD ·
 - [x] Argo CD GitOps configured
 - [x] Prometheus + Grafana dashboards live
 - [x] Autoscaling on request metrics (KEDA)
+- [x] Benchmark results documented (Phase 1)
+- [x] Blog post published
 - [ ] Phase 2: real vLLM with Llama-3 8B
-- [ ] Benchmark results documented
+- [ ] Benchmark results documented (Phase 2)
 
 ## API
 
@@ -79,16 +81,21 @@ Prometheus-format metrics including request count, latency histograms, and reque
 
 ## Benchmarks
 
-*To be updated as the platform matures.*
+Phase 1 numbers were measured using [hey](https://github.com/rakyll/hey) with 8 concurrent clients sending sustained load for 2 minutes against 2 pods on `t3.medium` nodes.
+
+> **Note:** Phase 1 latency includes 50–300ms of simulated inference delay added to mimic real model response times. These numbers reflect infrastructure overhead and are not directly comparable to Phase 2 real model inference latency.
 
 | Metric | Phase 1 (CPU stub) | Phase 2 (vLLM + Llama-3 8B) |
 |---|---|---|
-| Model | FastAPI stub | Llama-3 8B INT4 |
-| Hardware | t3.medium (CPU) | g4dn.xlarge (GPU) |
-| Throughput (tokens/sec) | TBD | TBD |
-| Latency p50 | TBD | TBD |
-| Latency p99 | TBD | TBD |
-| Batch size | TBD | TBD |
+| Model | FastAPI stub (simulated latency) | Llama-3 8B INT4 |
+| Hardware | t3.medium (CPU only) | g4dn.xlarge (GPU) |
+| Throughput (req/sec) | 38.4 | TBD |
+| Latency p50 | 209ms | TBD |
+| Latency p90 | 307ms | TBD |
+| Latency p99 | 333ms | TBD |
+| Concurrent clients | 8 | TBD |
+| Success rate | 100% (4,619 / 4,619) | TBD |
+| Autoscaling | 2 → 5 pods under load | TBD |
 
 ## Architecture decisions
 
@@ -109,6 +116,12 @@ docker run -p 8000:8000 llm-serving-platform:latest
 curl -X POST http://localhost:8000/v1/generate \
   -H "Content-Type: application/json" \
   -d '{"prompt": "Hello world", "max_tokens": 50}'
+
+# Load test (requires hey: brew install hey)
+hey -z 2m -c 8 -m POST \
+  -H "Content-Type: application/json" \
+  -d '{"prompt":"test"}' \
+  http://localhost:8000/v1/generate
 ```
 
 ## Deployment
@@ -118,7 +131,7 @@ curl -X POST http://localhost:8000/v1/generate \
 cd terraform
 terraform apply
 
-# Bootstrap the cluster (installs Argo CD, Prometheus, Grafana, KEDA)
+# Bootstrap the cluster (installs Argo CD, Prometheus, Grafana, KEDA, imports dashboard)
 ./scripts/bootstrap.sh
 
 # Argo CD then deploys the app automatically from git.
