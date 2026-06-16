@@ -2,7 +2,7 @@ replicaCount: 2
 
 image:
   repository: 803343982815.dkr.ecr.us-west-2.amazonaws.com/llm-serving-platform
-  tag: 48daee0be851db08b8f0145d5b6dc60170780b37
+  tag: fb043d8ca362c21e2c9d9f8508572ee0947833f0
   pullPolicy: Always
 
 service:
