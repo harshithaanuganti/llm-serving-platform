@@ -1,43 +1,52 @@
-replicaCount: 2
+# ============================================
+# PHASE TOGGLE — 1 = FastAPI CPU stub, 2 = vLLM GPU
+# ============================================
+phase: 1
 
-image:
-  repository: 803343982815.dkr.ecr.us-west-2.amazonaws.com/llm-serving-platform
-  tag: fb043d8ca362c21e2c9d9f8508572ee0947833f0
-  pullPolicy: Always
+# ---------- Phase 1: FastAPI CPU stub ----------
+phase1:
+  replicaCount: 2
+  image:
+    repository: 803343982815.dkr.ecr.us-west-2.amazonaws.com/llm-serving-platform
+    tag: fb043d8ca362c21e2c9d9f8508572ee0947833f0
+    pullPolicy: Always
+  resources:
+    requests:
+      memory: "512Mi"
+      cpu: "500m"
+    limits:
+      memory: "1Gi"
+      cpu: "1000m"
+  healthCheck:
+    path: /healthz
+    initialDelaySeconds: 10
+    periodSeconds: 10
+
+# ---------- Phase 2: vLLM GPU ----------
+phase2:
+  replicaCount: 1
+  image:
+    repository: vllm/vllm-openai
+    tag: latest
+    pullPolicy: Always
+  model: meta-llama/Meta-Llama-3-8B-Instruct
+  resources:
+    requests:
+      memory: "12Gi"
+      cpu: "2000m"
+      nvidia.com/gpu: "1"
+    limits:
+      memory: "20Gi"
+      cpu: "4000m"
+      nvidia.com/gpu: "1"
+  healthCheck:
+    path: /health
+    initialDelaySeconds: 300   # vLLM needs time to load the model
+    periodSeconds: 15
 
 service:
   type: ClusterIP
   port: 8000
-
-resources:
-  requests:
-    memory: "512Mi"
-    cpu: "500m"
-  limits:
-    memory: "1Gi"
-    cpu: "1000m"
-
-# GPU resources - uncomment for Phase 2 with real vLLM
-# resources:
-#   requests:
-#     memory: "8Gi"
-#     cpu: "2000m"
-#     nvidia.com/gpu: "1"
-#   limits:
-#     memory: "16Gi"
-#     cpu: "4000m"
-#     nvidia.com/gpu: "1"
-
-autoscaling:
-  enabled: true
-  minReplicas: 2
-  maxReplicas: 6
-  targetCPUUtilizationPercentage: 70
-
-healthCheck:
-  path: /healthz
-  initialDelaySeconds: 10
-  periodSeconds: 10
 
 env:
   - name: APP_ENV

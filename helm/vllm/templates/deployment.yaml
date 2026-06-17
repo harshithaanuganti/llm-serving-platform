@@ -5,7 +5,11 @@ metadata:
   labels:
     app: {{ .Release.Name }}-vllm
 spec:
-  replicas: {{ .Values.replicaCount }}
+{{- if eq (.Values.phase | int) 2 }}
+  replicas: {{ .Values.phase2.replicaCount }}
+{{- else }}
+  replicas: {{ .Values.phase1.replicaCount }}
+{{- end }}
   selector:
     matchLabels:
       app: {{ .Release.Name }}-vllm
@@ -14,33 +18,86 @@ spec:
       labels:
         app: {{ .Release.Name }}-vllm
     spec:
+{{- if eq (.Values.phase | int) 2 }}
+      # Phase 2: schedule onto GPU nodes
+      nodeSelector:
+        node-type: gpu
+      tolerations:
+        - key: "nvidia.com/gpu"
+          operator: "Equal"
+          value: "true"
+          effect: "NoSchedule"
+{{- end }}
       containers:
         - name: vllm
-          image: "{{ .Values.image.repository }}:{{ .Values.image.tag }}"
-          imagePullPolicy: {{ .Values.image.pullPolicy }}
+{{- if eq (.Values.phase | int) 2 }}
+          # ---- Phase 2: vLLM serving Llama-3 ----
+          image: "{{ .Values.phase2.image.repository }}:{{ .Values.phase2.image.tag }}"
+          imagePullPolicy: {{ .Values.phase2.image.pullPolicy }}
+          args:
+            - "--model"
+            - "{{ .Values.phase2.model }}"
+            - "--port"
+            - "8000"
+            - "--max-model-len"
+            - "8192"
+          env:
+            - name: HUGGING_FACE_HUB_TOKEN
+              valueFrom:
+                secretKeyRef:
+                  name: hf-token
+                  key: token
           ports:
             - containerPort: 8000
           resources:
             requests:
-              memory: {{ .Values.resources.requests.memory }}
-              cpu: {{ .Values.resources.requests.cpu }}
+              memory: {{ .Values.phase2.resources.requests.memory }}
+              cpu: {{ .Values.phase2.resources.requests.cpu }}
+              nvidia.com/gpu: {{ index .Values.phase2.resources.requests "nvidia.com/gpu" | quote }}
             limits:
-              memory: {{ .Values.resources.limits.memory }}
-              cpu: {{ .Values.resources.limits.cpu }}
+              memory: {{ .Values.phase2.resources.limits.memory }}
+              cpu: {{ .Values.phase2.resources.limits.cpu }}
+              nvidia.com/gpu: {{ index .Values.phase2.resources.limits "nvidia.com/gpu" | quote }}
+          livenessProbe:
+            httpGet:
+              path: {{ .Values.phase2.healthCheck.path }}
+              port: 8000
+            initialDelaySeconds: {{ .Values.phase2.healthCheck.initialDelaySeconds }}
+            periodSeconds: {{ .Values.phase2.healthCheck.periodSeconds }}
+          readinessProbe:
+            httpGet:
+              path: {{ .Values.phase2.healthCheck.path }}
+              port: 8000
+            initialDelaySeconds: {{ .Values.phase2.healthCheck.initialDelaySeconds }}
+            periodSeconds: {{ .Values.phase2.healthCheck.periodSeconds }}
+{{- else }}
+          # ---- Phase 1: FastAPI CPU stub ----
+          image: "{{ .Values.phase1.image.repository }}:{{ .Values.phase1.image.tag }}"
+          imagePullPolicy: {{ .Values.phase1.image.pullPolicy }}
+          ports:
+            - containerPort: 8000
+          resources:
+            requests:
+              memory: {{ .Values.phase1.resources.requests.memory }}
+              cpu: {{ .Values.phase1.resources.requests.cpu }}
+            limits:
+              memory: {{ .Values.phase1.resources.limits.memory }}
+              cpu: {{ .Values.phase1.resources.limits.cpu }}
           env:
             {{- toYaml .Values.env | nindent 12 }}
           livenessProbe:
             httpGet:
-              path: {{ .Values.healthCheck.path }}
+              path: {{ .Values.phase1.healthCheck.path }}
               port: 8000
-            initialDelaySeconds: {{ .Values.healthCheck.initialDelaySeconds }}
-            periodSeconds: {{ .Values.healthCheck.periodSeconds }}
+            initialDelaySeconds: {{ .Values.phase1.healthCheck.initialDelaySeconds }}
+            periodSeconds: {{ .Values.phase1.healthCheck.periodSeconds }}
           readinessProbe:
             httpGet:
-              path: {{ .Values.healthCheck.path }}
+              path: {{ .Values.phase1.healthCheck.path }}
               port: 8000
-            initialDelaySeconds: {{ .Values.healthCheck.initialDelaySeconds }}
-            periodSeconds: {{ .Values.healthCheck.periodSeconds }}
+            initialDelaySeconds: {{ .Values.phase1.healthCheck.initialDelaySeconds }}
+            periodSeconds: {{ .Values.phase1.healthCheck.periodSeconds }}
+{{- end }}
 ---
 apiVersion: v1
 kind: Service
@@ -57,23 +114,3 @@ spec:
       protocol: TCP
       port: {{ .Values.service.port }}
       targetPort: 8000
-# Commenting out since keda is configured
-# --- 
-# apiVersion: autoscaling/v2
-# kind: HorizontalPodAutoscaler
-# metadata:
-#   name: {{ .Release.Name }}-vllm
-# spec:
-#   scaleTargetRef:
-#     apiVersion: apps/v1
-#     kind: Deployment
-#     name: {{ .Release.Name }}-vllm
-#   minReplicas: {{ .Values.autoscaling.minReplicas }}
-#   maxReplicas: {{ .Values.autoscaling.maxReplicas }}
-#   metrics:
-#     - type: Resource
-#       resource:
-#         name: cpu
-#         target:
-#           type: Utilization
-#           averageUtilization: {{ .Values.autoscaling.targetCPUUtilizationPercentage }}

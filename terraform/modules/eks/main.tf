@@ -73,5 +73,32 @@ resource "aws_eks_node_group" "main" {
   tags       = { Project = "llm-serving-platform" }
 }
 
+resource "aws_eks_node_group" "gpu" {
+  cluster_name    = aws_eks_cluster.main.name
+  node_group_name = "${var.cluster_name}-gpu-nodes"
+  node_role_arn   = aws_iam_role.eks_node.arn
+  subnet_ids      = var.subnet_ids
+  instance_types  = ["g4dn.xlarge"]
+
+  scaling_config {
+    desired_size = 0
+    min_size     = 0
+    max_size     = 2
+  }
+
+  labels = {
+    "node-type" = "gpu"
+  }
+
+  taint {
+    key    = "nvidia.com/gpu"
+    value  = "true"
+    effect = "NO_SCHEDULE"
+  }
+
+  depends_on = [aws_iam_role_policy_attachment.eks_node_policy]
+  tags       = { Project = "llm-serving-platform" }
+}
+
 output "cluster_name"     { value = aws_eks_cluster.main.name }
 output "cluster_endpoint" { value = aws_eks_cluster.main.endpoint }
