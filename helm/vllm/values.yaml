@@ -1,7 +1,7 @@
 # ============================================
 # PHASE TOGGLE — 1 = FastAPI CPU stub, 2 = vLLM GPU
 # ============================================
-phase: 1
+phase: 2
 
 # ---------- Phase 1: FastAPI CPU stub ----------
 phase1:
